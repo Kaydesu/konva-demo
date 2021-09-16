@@ -5,7 +5,6 @@ import TexboxController from "./TexboxController";
 const MODE = {
   DRAW: "DRAWING",
   TRANSFORM: "TRANSFORM",
-  MOVE: "MOVE",
 }
 
 export class KonvaController {
@@ -44,7 +43,6 @@ export class KonvaController {
     this.layer = new Konva.Layer();
     this.stage.add(this.layer);
     this.initializeStageEvents();
-    console.log(this.stage);
   }
 
   setEnableTool(bool) {
@@ -58,6 +56,7 @@ export class KonvaController {
 
   initializeStageEvents() {
     this.stage.on('mousedown', e => {
+      console.log("hello konva");
       if (!this.tool.enable) return;
       this.selectTarget(e);
       switch (this.mode) {
@@ -67,13 +66,10 @@ export class KonvaController {
           this.layer.add(this.currentItem.getInstance());
           this.items.push(this.currentItem);
           this.startDraw = true;
-          console.log("start drawing");
           break;
         }
         case MODE.TRANSFORM: {
-          break;
-        }
-        case MODE.MOVE: {
+          this.startTransform = true;
           break;
         }
       }
@@ -92,10 +88,11 @@ export class KonvaController {
           break;
         }
         case MODE.TRANSFORM: {
-
-          break;
-        }
-        case MODE.MOVE: {
+          if(!this.startTransform) return;
+          let w = this.anchorTool.getSize().width;
+          let h = this.anchorTool.getSize().height;
+          this.currentItem.getInstance().width(w);
+          this.currentItem.getInstance().height(h);
           break;
         }
       }
@@ -113,9 +110,7 @@ export class KonvaController {
           break;
         }
         case MODE.TRANSFORM: {
-          break;
-        }
-        case MODE.MOVE: {
+          this.startTransform = false;
           break;
         }
       }
@@ -127,7 +122,16 @@ export class KonvaController {
     let target = e.target === this.stage ? null : e.target;
     if (!target) {
       this.mode = MODE.DRAW;
+      return;
     }
+    this.mode = MODE.TRANSFORM;
+    if(this.isAnchorSelected(target)) return;
+    this.currentItem = this.items.find(item => item.getInstance()._id === target._id);
+    this.anchorTool.nodes([target]);
+  }
+
+  isAnchorSelected(target) {
+    return target.parent === this.anchorTool;
   }
 
 }
@@ -144,7 +148,6 @@ class TextBox {
       draggable: true,
     });
     this.controlElement = null;
-    this.onDragHandle();
     this.onTransform();
   }
 
@@ -163,19 +166,10 @@ class TextBox {
     stage.content.appendChild(this.controlElement);
   }
 
-  onDragHandle() {
-    this.instance.on("xChange", e => {
-      this.updateControllerPosition();
-    });
-    this.instance.on("yChange", e => {
-      this.updateControllerPosition();
-    });
-  }
-
   onTransform() {
-    this.instance.on("transform", e => {
-      console.log(e);
-    })
+    this.instance.on("transform", this.updateControllerPosition.bind(this));
+    this.instance.on("xChange", this.updateControllerPosition.bind(this));
+    this.instance.on("yChange", this.updateControllerPosition.bind(this));
   }
 
   updateControllerPosition() {
