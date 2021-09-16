@@ -88,7 +88,7 @@ export class KonvaController {
           break;
         }
         case MODE.TRANSFORM: {
-          if(!this.startTransform) return;
+          if (!this.startTransform) return;
           let w = this.anchorTool.getSize().width;
           let h = this.anchorTool.getSize().height;
           this.currentItem.getInstance().width(w);
@@ -105,7 +105,15 @@ export class KonvaController {
           this.tool.endPos = this.stage.getPointerPosition();
           this.activateAnchor(this.currentItem.getInstance());
           this.currentItem.buildControl(this.stage);
-          ReactDOM.render(<TexboxController />, this.currentItem.getControlElement());
+          ReactDOM.render(
+            <TexboxController
+              id={this.currentItem.getInstance()._id}
+              onConfirm={this.confirm.bind(this)}
+              onRemove={this.remove.bind(this)}
+            />,
+            this.currentItem.getControlElement()
+          );
+          this.currentItem.getInstance().strokeWidth(0);
           this.mode = MODE.TRANSFORM;
           break;
         }
@@ -125,7 +133,7 @@ export class KonvaController {
       return;
     }
     this.mode = MODE.TRANSFORM;
-    if(this.isAnchorSelected(target)) return;
+    if (this.isAnchorSelected(target)) return;
     this.currentItem = this.items.find(item => item.getInstance()._id === target._id);
     this.anchorTool.nodes([target]);
   }
@@ -134,6 +142,25 @@ export class KonvaController {
     return target.parent === this.anchorTool;
   }
 
+  add(target) {
+    this.layer.add(target);
+  }
+
+  confirm(id) {
+    const target = this.items.find(item => item.getInstance()._id === id);
+    target.confirm();
+    this.layer.add(target.text);
+  }
+
+  remove(id) {
+    const target = this.items.find(item => item.getInstance()._id === id);
+    target.remove();
+    target.getInstance().remove();
+    if (this.currentItem && this.currentItem.getInstance()._id === id) {
+      this.currentItem = null;
+      this.anchorTool.remove();
+    }
+  }
 }
 
 class TextBox {
@@ -145,9 +172,14 @@ class TextBox {
       height,
       stroke: "#405bef",
       strokeWidth: 1,
+      fill: "rgba(0, 0, 0, 0.2)",
       draggable: true,
     });
+
+    this.text = new Konva.Text();
+
     this.controlElement = null;
+    this.textArea = null;
     this.onTransform();
   }
 
@@ -162,8 +194,15 @@ class TextBox {
   buildControl(stage) {
     this.controlElement = document.createElement("div");
     this.controlElement.style.position = "absolute";
+    this.controlElement.addEventListener("mousedown", e => {
+      e.stopPropagation();
+    });
+    this.textArea = document.createElement("textarea");
+    this.textArea.className = "text-tool-textarea";
     this.updateControllerPosition()
     stage.content.appendChild(this.controlElement);
+    stage.content.appendChild(this.textArea);
+    this.textArea.focus();
   }
 
   onTransform() {
@@ -176,7 +215,44 @@ class TextBox {
     const x = this.instance.position().x;
     const y = this.instance.position().y;
     const w = this.instance.getSize().width;
+
     this.controlElement.style.left = `${x + w + 10}px`;
     this.controlElement.style.top = `${y}px`;
+
+    const padding = this.getPadding();
+
+    this.textArea.style.left = `${padding.left}px`;
+    this.textArea.style.top = `${padding.top}px`;
+    this.textArea.style.width = `${padding.width}px`;
+    this.textArea.style.height = `${padding.height}px`;
+  }
+
+  getPadding() {
+    const x = this.instance.position().x;
+    const y = this.instance.position().y;
+    const w = this.instance.getSize().width;
+    const h = this.instance.getSize().height;
+
+    return {
+      left: x + 10,
+      top: y + 10,
+      width: w - 20,
+      height: h - 20,
+    }
+  }
+
+  confirm() {
+    const padding = this.getPadding();
+    this.text.text(this.textArea.value);
+    this.text.x(padding.left);
+    this.text.y(padding.top);
+    this.text.width(padding.width);
+    this.text.height(padding.height);
+    this.textArea.remove();
+  }
+
+  remove() {
+    this.controlElement.remove();
+    this.textArea.remove();
   }
 }

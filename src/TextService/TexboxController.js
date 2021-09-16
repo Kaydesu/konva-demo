@@ -1,17 +1,23 @@
 import React, { useState } from 'react'
 
-function TexboxController() {
+function TexboxController({ id, onRemove, onConfirm }) {
 
   const [confirm, setConfirm] = useState(false);
 
+  const handleOnConfirm = () => {
+    onConfirm(id);
+    setConfirm(true);
+  }
+
   return !confirm ? (
     <button
-      style={{ zIndex: 1500 }}
-      onClick={(e) => setConfirm(true)}
-      onMouseDown={(e) => e.stopPropagation()}
+      onClick={handleOnConfirm}
     >
       Confirm</button>
-  ) : <button>x</button>
+  ) : (<button
+    onClick={() => onRemove(id)}
+
+  >x</button>)
 }
 
 export default TexboxController

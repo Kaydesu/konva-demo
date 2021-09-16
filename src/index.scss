@@ -14,6 +14,16 @@ body {
     background-color: beige;
     flex-grow: 1;
     height: 100%;
+
+    .text-tool-textarea {
+      position: absolute;
+      resize: none;
+      border: none;
+      background-color: transparent;
+      outline: none;
+      overflow: hidden;
+    }
+
   }
   .konva-container.tool-enabled {
     cursor: text;
