@@ -1,23 +1,36 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import "./index.scss";
+import { KonvaController } from './TextService/KonvaController';
+
+const controller = new KonvaController();
 
 function App() {
+  const [enable, setEnable] = useState(false);
+
+  useEffect(() => {
+    controller.initialize();
+  }, []);
+
+  const handleToolClick = () => {
+    setEnable(!enable);
+    controller.setEnableTool(!enable);
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app">
+      <div className="tool-select">
+        <button
+          style={{
+            backgroundColor: enable ? "green" : "red",
+            color: "#fff",
+          }}
+          onClick={handleToolClick}>
+          Text box tool
+        </button>
+      </div>
+      <div 
+        id="konva-container"
+        className={`${enable ? "konva-container tool-enabled" : "konva-container"}`}></div>
     </div>
   );
 }

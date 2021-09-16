@@ -1,0 +1,21 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+  .tool-select {
+    width: 200px;
+    padding: 20px;
+  }
+  .konva-container {
+    background-color: beige;
+    flex-grow: 1;
+    height: 100%;
+  }
+  .konva-container.tool-enabled {
+    cursor: text;
+  }
+}
